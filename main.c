@@ -23,9 +23,9 @@ typedef enum {
 
 const char *priority_str[] = {
     "INVALID",
-    "LOW",
+    "HIGH",
     "MEDIUM",
-    "HIGH"
+    "LOW"
 };
 
 const char *status_str[] = {
