@@ -10,41 +10,59 @@ int tasksLen = sizeof(tasks) / sizeof(tasks[0]);
 
 FILE *tasksFile;
 
+typedef enum {
+	LOW = 3,
+	MEDIUM = 2,
+	HIGH = 1
+} Priority;
+
+typedef enum {
+	TODO = 0,
+	DONE = 1
+} Status;
+
+const char *priority_str[] = {
+    "INVALID",
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+};
+
+const char *status_str[] = {
+    "TODO",
+    "DONE"
+};
+
+struct Task {
+	int num;
+	char name[100];
+	Priority priority;
+	Status status;
+};
+
+int parse_tasks_file(FILE *tasksFile) {
+	fopen(TASKS_FILENAME, "r");
+
+}
+
 int add_task() {
-	enum Priority {
-		LOW = 3,
-		MEDIUM = 2,
-		HIGH = 1
-	};
-
-	enum Status{
-		TODO = 0,
-		DONE = 1
-	};
-
-	struct Task {
-		int num;
-		char name[100];
-		enum Priority priority;
-		enum Status status;
-	};
-
 	struct Task task;
 
 	// Get number of tasks
+	tasksFile = fopen(TASKS_FILENAME, "r");
 	char c;
 	task.num = 1;
-	while(!feof(tasksFile))
+	while ((c = fgetc(tasksFile)) != EOF)
 	{
-		c = fgetc(tasksFile);
 		if(c == '\n')
 		{
 			task.num++;
 		}
 	}
+	fclose(tasksFile);
 
-	// Set status as TODO
-	task.status = 0;
+	// Set new task status to TODO
+	task.status = TODO;
 
 	printf("Type your task: ");
 	fgets(task.name, sizeof(task.name), stdin);
@@ -99,14 +117,14 @@ int draw_home() {
 	printf("==========\n");
 
 	// Display tasks from file
-	char buffer[MAX_TASKS];
 	tasksFile = fopen(TASKS_FILENAME, "r");
 	if (tasksFile == NULL) {
 		tasksFile = fopen(TASKS_FILENAME, "w");
 		fprintf(tasksFile, "\0");
 	}
-	while (fgets(buffer, MAX_TASKS, tasksFile) != NULL) {
-		printf("%s", buffer);
+	struct Task task;
+	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
+		printf("%d. %-32s%-8s%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
 	}
 	fclose(tasksFile);
 
@@ -127,8 +145,6 @@ int draw_home() {
 		printf("unknown command %s", input);
 		return 1;
 	}
-
-
 
 	return 0;
 }
