@@ -77,6 +77,8 @@ char getch() {
 int display_tasks() {
 	printf("Tasks\n");
 	printf("========\n");
+	// Headers
+	printf("   %-32s%-12s%-8s\n", "Name", "Priority", "Status");
 	tasksFile = fopen(TASKS_FILENAME, "r");
 	if (tasksFile == NULL) {
 		tasksFile = fopen(TASKS_FILENAME, "w");
@@ -87,30 +89,30 @@ int display_tasks() {
 		switch (task.priority) {
 			case HIGH:
 				if (task.status == DONE) {
-					printf("%d. %-32s"RED"%-8s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
+					printf("%d. %-32s"RED"%-12s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
 				}
 				else {
-					printf("%d. %-32s"RED"%-8s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+					printf("%d. %-32s"RED"%-12s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
 				}
 				break;
 			case MEDIUM:
 				if (task.status == DONE) {
-					printf("%d. %-32s"ORG"%-8s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
+					printf("%d. %-32s"ORG"%-12s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
 				}
 				else {
-					printf("%d. %-32s"ORG"%-8s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+					printf("%d. %-32s"ORG"%-12s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
 				}
 				break;
 			case LOW:
 				if (task.status == DONE) {
-					printf("%d. %-32s"CYN"%-8s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
+					printf("%d. %-32s"CYN"%-12s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
 				}
 				else {
-					printf("%d. %-32s"CYN"%-8s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+					printf("%d. %-32s"CYN"%-12s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
 				}
 				break;
 			default:
-				printf("%d. %-32s%-8s%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+				printf("%d. %-32s%-12s%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
 		}
 	}
 	fclose(tasksFile);
@@ -204,6 +206,35 @@ int complete_task() {
 }
 
 int delete_task() {
+	clear_screen();
+	display_tasks();
+
+	printf("\033[999;1HNumber of completed task: ");
+	// Convert char to int
+	int selectedNum = getch() - '0';
+
+	struct Task task;
+	tasksFile = fopen(TASKS_FILENAME, "r");
+	FILE *tempFile = fopen(TEMP_FILENAME, "w");
+	if (tasksFile == NULL) {
+		tasksFile = fopen(TASKS_FILENAME, "w");
+		fprintf(tasksFile, "\0");
+	}
+	// Copy each line to a temp file
+	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
+		// Don't copy the selected task
+		if (task.num == selectedNum) {
+			continue;
+		}
+		else {
+			fprintf(tempFile, "%d,\"%s\",%d,%d\n", task.num, task.name, task.priority, task.status);
+		}
+	}
+	fclose(tasksFile);
+	fclose(tempFile);
+	// Remove old tasks file and rename the temp file to replace it
+	remove(TASKS_FILENAME);
+  rename(TEMP_FILENAME, TASKS_FILENAME);
 	return 0;
 }
 
