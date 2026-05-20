@@ -125,10 +125,6 @@ int add_task() {
 			task.priority = MEDIUM;
 	}
 
-	//printf("Task: %s\n", task.name);
-	//printf("Priority %d\n", task.priority);
-	//printf("Status %d\n", task.status);
-
 	tasksFile = fopen(TASKS_FILENAME, "a");
 	if (tasksFile == NULL) return 1;
 	fprintf(tasksFile, "%d,\"%s\",%d,%d\n", task.num, task.name, task.priority, task.status);
@@ -152,8 +148,6 @@ int draw_home() {
 	// Print at bottom of screen
 	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task");
 	char input = getch();
-	//fgets(input, sizeof(input), stdin);
-	//input[strcspn(input, "\n")] = 0;
 	if (input == 'a') {
 		add_task();
 	}
