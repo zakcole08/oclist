@@ -6,6 +6,7 @@
 
 #define MAX_TASKS 100
 #define TASKS_FILENAME ".tasks.txt"
+#define TEMP_FILENAME ".tasks.temp"
 
 char *tasks[MAX_TASKS];
 int tasksLen = sizeof(tasks) / sizeof(tasks[0]);
@@ -134,6 +135,34 @@ int add_task() {
 }
 
 int complete_task() {
+	clear_screen();
+	display_tasks();
+
+	printf("\033[999;1HNumber of completed task: ");
+	// Convert char to int
+	int selectedNum = getch() - '0';
+
+	struct Task task;
+	tasksFile = fopen(TASKS_FILENAME, "r");
+	FILE *tempFile = fopen(TEMP_FILENAME, "w");
+	if (tasksFile == NULL) {
+		tasksFile = fopen(TASKS_FILENAME, "w");
+		fprintf(tasksFile, "\0");
+	}
+	// Copy each line to a temp file
+	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
+		// Mark the selected task as done
+		if (task.num == selectedNum) {
+			task.status = DONE;
+		}
+		fprintf(tempFile, "%d,\"%s\",%d,%d\n", task.num, task.name, task.priority, task.status);
+	}
+	fclose(tasksFile);
+	fclose(tempFile);
+	// Remove old tasks file and rename the temp file to replace it
+	remove(TASKS_FILENAME);
+  rename(TEMP_FILENAME, TASKS_FILENAME);
+	
 	return 0;
 }
 
