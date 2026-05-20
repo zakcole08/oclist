@@ -8,6 +8,16 @@
 #define TASKS_FILENAME ".tasks.txt"
 #define TEMP_FILENAME ".tasks.temp"
 
+#define BOT "\033[999;1H"
+#define GRN "\033[32m"
+#define RED "\033[31m"
+#define ORG "\033[38;5;208m"
+#define CYN "\033[36m"
+#define MAG "\033[35m"
+#define RST "\033[0m"
+#define CLR "\033[1;1H\033[2J"
+
+
 char *tasks[MAX_TASKS];
 int tasksLen = sizeof(tasks) / sizeof(tasks[0]);
 
@@ -44,7 +54,7 @@ struct Task {
 };
 
 int clear_screen() {
-	printf("\e[1;1H\e[2J");
+	printf(CLR);
 	return 0;
 }
 
@@ -74,7 +84,34 @@ int display_tasks() {
 	}
 	struct Task task;
 	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
-		printf("%d. %-32s%-8s%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+		switch (task.priority) {
+			case HIGH:
+				if (task.status == DONE) {
+					printf("%d. %-32s"RED"%-8s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
+				}
+				else {
+					printf("%d. %-32s"RED"%-8s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+				}
+				break;
+			case MEDIUM:
+				if (task.status == DONE) {
+					printf("%d. %-32s"ORG"%-8s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
+				}
+				else {
+					printf("%d. %-32s"ORG"%-8s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+				}
+				break;
+			case LOW:
+				if (task.status == DONE) {
+					printf("%d. %-32s"CYN"%-8s"GRN"%-8s\n"RST, task.num, task.name, priority_str[task.priority], status_str[task.status]);
+				}
+				else {
+					printf("%d. %-32s"CYN"%-8s"RST"%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+				}
+				break;
+			default:
+				printf("%d. %-32s%-8s%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+		}
 	}
 	fclose(tasksFile);
 	return 0;
