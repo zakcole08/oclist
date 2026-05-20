@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <termios.h>
+#include <unistd.h>
 
 #define MAX_TASKS 100
 #define TASKS_FILENAME ".tasks.txt"
@@ -22,15 +24,15 @@ typedef enum {
 } Status;
 
 const char *priority_str[] = {
-    "INVALID",
-    "HIGH",
-    "MEDIUM",
-    "LOW"
+	"INVALID",
+	"HIGH",
+	"MEDIUM",
+	"LOW"
 };
 
 const char *status_str[] = {
-    "TODO",
-    "DONE"
+	"TODO",
+	"DONE"
 };
 
 struct Task {
@@ -44,6 +46,39 @@ int clear_screen() {
 	printf("\e[1;1H\e[2J");
 	return 0;
 }
+
+char getch() {
+	struct termios oldt, newt;
+	char c;
+	// Save current terminal settings
+	tcgetattr(STDIN_FILENO, &oldt);
+	newt = oldt;
+	// Disable buffering and echo
+	newt.c_lflag &= ~(ICANON | ECHO);
+	// Apply new settings
+	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	c = getchar();
+	// Restore old terminal settings
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	return c;
+}
+
+int display_tasks() {
+	printf("Tasks\n");
+	printf("========\n");
+	tasksFile = fopen(TASKS_FILENAME, "r");
+	if (tasksFile == NULL) {
+		tasksFile = fopen(TASKS_FILENAME, "w");
+		fprintf(tasksFile, "\0");
+	}
+	struct Task task;
+	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
+		printf("%d. %-32s%-8s%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
+	}
+	fclose(tasksFile);
+	return 0;
+}
+
 
 int add_task() {
 	struct Task task;
@@ -64,26 +99,26 @@ int add_task() {
 	// Set new task status to TODO
 	task.status = TODO;
 
-	printf("Type your task: ");
+	clear_screen();
+	display_tasks();
+	// Print at bottom of the screen
+	printf("\033[999;1HType your task: ");
 	fgets(task.name, sizeof(task.name), stdin);
 	task.name[strcspn(task.name, "\n")] = 0;
-	printf("Select priority:\n");
-	printf("[1] HIGH\n");
-	printf("[2] MEDIUM\n");
-	printf("[3] LOW\n");
-	int priorityInput;
-	scanf("%d", &priorityInput);
-	// Consume newline
-	getchar();
+
+	clear_screen();
+	display_tasks();
+	printf("\033[999;1HSelect priority: [1] HIGH | [2] MEDIUM | [3] LOW");
+	int priorityInput = getch();
 
 	switch(priorityInput) {
-		case 1:
+		case '1':
 			task.priority = HIGH;
 			break;
-		case 2:
+		case '2':
 			task.priority = MEDIUM;
 			break;
-		case 3:
+		case '3':
 			task.priority = LOW;
 			break;
 		default:
@@ -112,38 +147,24 @@ int delete_task() {
 
 int draw_home() {
 	clear_screen();
-	char input[10];
-
-	printf("Tasks\n");
-	printf("==========\n");
-
-	// Display tasks from file
-	tasksFile = fopen(TASKS_FILENAME, "r");
-	if (tasksFile == NULL) {
-		tasksFile = fopen(TASKS_FILENAME, "w");
-		fprintf(tasksFile, "\0");
-	}
-	struct Task task;
-	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
-		printf("%d. %-32s%-8s%-8s\n", task.num, task.name, priority_str[task.priority], status_str[task.status]);
-	}
-	fclose(tasksFile);
+	display_tasks();
 
 	// Print at bottom of screen
 	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task");
-	fgets(input, sizeof(input), stdin);
-	input[strcspn(input, "\n")] = 0;
-	if (strcmp(input, "a") == 0) {
+	char input = getch();
+	//fgets(input, sizeof(input), stdin);
+	//input[strcspn(input, "\n")] = 0;
+	if (input == 'a') {
 		add_task();
 	}
-	else if (strcmp(input, "c") == 0) {
+	else if (input == 'c') {
 		complete_task();
 	}
-	else if (strcmp(input, "d") == 0) {
+	else if (input == 'd') {
 		delete_task();
 	}
 	else {
-		printf("unknown command %s", input);
+		printf("unknown command %c", input);
 		return 1;
 	}
 
