@@ -40,9 +40,9 @@ struct Task {
 	Status status;
 };
 
-int parse_tasks_file(FILE *tasksFile) {
-	fopen(TASKS_FILENAME, "r");
-
+int clear_screen() {
+	printf("\e[1;1H\e[2J");
+	return 0;
 }
 
 int add_task() {
@@ -111,6 +111,7 @@ int delete_task() {
 }
 
 int draw_home() {
+	clear_screen();
 	char input[10];
 
 	printf("Tasks\n");
