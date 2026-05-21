@@ -14,9 +14,9 @@
 #define ORG "\033[38;5;208m"
 #define CYN "\033[36m"
 #define MAG "\033[35m"
+#define GRY "\033[100m"
 #define RST "\033[0m"
 #define CLR "\033[1;1H\033[2J"
-
 
 char *tasks[MAX_TASKS];
 int tasksLen = sizeof(tasks) / sizeof(tasks[0]);
@@ -33,6 +33,9 @@ typedef enum {
 	TODO = 0,
 	DONE = 1
 } Status;
+
+// Set default tab to TODO tab
+Status tabSel = TODO;
 
 const char *priority_str[] = {
 	"INVALID",
@@ -75,6 +78,14 @@ char getch() {
 }
 
 int display_tasks() {
+	if (tabSel == TODO) {
+		printf(GRY"| TODO  |"RST" DONE |\n");
+		printf(GRY"'-------'"RST"------'\n");
+	}
+	else {
+		printf("| TODO  "GRY"| DONE |\n"RST);
+		printf("'-------"GRY"'------'\n"RST);	
+	}
 	printf("Tasks\n");
 	printf("========\n");
 	// Headers
@@ -86,6 +97,12 @@ int display_tasks() {
 	}
 	struct Task task;
 	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
+		if (tabSel == TODO && task.status != TODO) {
+			continue;
+		}
+		if (tabSel == DONE && task.status != DONE) {
+			continue;
+		}
 		switch (task.priority) {
 			case HIGH:
 				if (task.status == DONE) {
@@ -243,7 +260,7 @@ int draw_home() {
 	display_tasks();
 
 	// Print at bottom of screen
-	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task | [q] quit");
+	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task | [t] toggle tab | [q] quit");
 	char input = getch();
 	if (input == 'a') {
 		add_task();
@@ -253,6 +270,14 @@ int draw_home() {
 	}
 	else if (input == 'd') {
 		delete_task();
+	}
+	else if (input == 't') {
+		if (tabSel == TODO) {
+			tabSel = DONE;
+		}
+		else {
+			tabSel = TODO;
+		}
 	}
 	else if (input == 'q') {
 		printf("\n");
