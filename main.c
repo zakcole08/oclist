@@ -243,7 +243,7 @@ int draw_home() {
 	display_tasks();
 
 	// Print at bottom of screen
-	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task");
+	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task | [q] quit");
 	char input = getch();
 	if (input == 'a') {
 		add_task();
@@ -253,6 +253,10 @@ int draw_home() {
 	}
 	else if (input == 'd') {
 		delete_task();
+	}
+	else if (input == 'q') {
+		printf("\n");
+		return -1;
 	}
 	else {
 		printf("unknown command %c", input);
@@ -265,7 +269,9 @@ int draw_home() {
 int main(int argc, char *argv[]) {	
 
 	for (;;) {
-		draw_home();
+		if (draw_home() == -1) {
+			return 0;
+		}
 	}
 
 	return 0;
