@@ -255,12 +255,73 @@ int delete_task() {
 	return 0;
 }
 
+int edit_task() {
+	clear_screen();
+	display_tasks();
+
+	printf("\033[999;1HNumber of task to edit: ");
+	// Convert char to int
+	int selectedNum = getch() - '0';
+
+	clear_screen();
+	display_tasks();
+
+	printf("\033[999;1HNew task name: ");
+	char newTaskName[100];
+	fgets(newTaskName, sizeof(newTaskName), stdin);
+	newTaskName[strcspn(newTaskName, "\n")] = 0;
+
+	clear_screen();
+	display_tasks();
+	printf("\033[999;1HSelect priority: [1] HIGH | [2] MEDIUM | [3] LOW");
+	int newPriorityInput = getch();
+
+
+	struct Task task;
+	tasksFile = fopen(TASKS_FILENAME, "r");
+	FILE *tempFile = fopen(TEMP_FILENAME, "w");
+	if (tasksFile == NULL) {
+		tasksFile = fopen(TASKS_FILENAME, "w");
+		fprintf(tasksFile, "\0");
+	}
+	// Copy each line to a temp file
+	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
+		// Edit the task
+		if (task.num == selectedNum) {
+			strcpy(task.name , newTaskName);
+			switch(newPriorityInput) {
+				case '1':
+					task.priority = HIGH;
+					break;
+				case '2':
+					task.priority = MEDIUM;
+					break;
+				case '3':
+					task.priority = LOW;
+					break;
+				default:
+					task.priority = MEDIUM;
+			}
+		}
+		fprintf(tempFile, "%d,\"%s\",%d,%d\n", task.num, task.name, task.priority, task.status);
+	}
+	fclose(tasksFile);
+	fclose(tempFile);
+	// Remove old tasks file and rename the temp file to replace it
+	remove(TASKS_FILENAME);
+  rename(TEMP_FILENAME, TASKS_FILENAME);
+	
+	return 0;
+	
+	return 0;
+}
+
 int draw_home() {
 	clear_screen();
 	display_tasks();
 
 	// Print at bottom of screen
-	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task | [t] toggle tab | [q] quit");
+	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task | [e] edit task | [t] toggle tab | [q] quit");
 	char input = getch();
 	if (input == 'a') {
 		add_task();
@@ -270,6 +331,9 @@ int draw_home() {
 	}
 	else if (input == 'd') {
 		delete_task();
+	}
+	else if (input == 'e') {
+		edit_task();
 	}
 	else if (input == 't') {
 		if (tabSel == TODO) {
