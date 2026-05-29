@@ -218,7 +218,6 @@ int complete_task() {
 	// Remove old tasks file and rename the temp file to replace it
 	remove(TASKS_FILENAME);
   rename(TEMP_FILENAME, TASKS_FILENAME);
-	
 	return 0;
 }
 
@@ -243,9 +242,10 @@ int delete_task() {
 		if (task.num == selectedNum) {
 			continue;
 		}
-		else {
-			fprintf(tempFile, "%d,\"%s\",%d,%d\n", task.num, task.name, task.priority, task.status);
+		if (task.num > selectedNum) {
+			task.num--;
 		}
+		fprintf(tempFile, "%d,\"%s\",%d,%d\n", task.num, task.name, task.priority, task.status);
 	}
 	fclose(tasksFile);
 	fclose(tempFile);
