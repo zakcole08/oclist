@@ -3,6 +3,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include "asana.h"
 
 #define MAX_TASKS 100
 #define TASKS_FILENAME ".tasks.txt"
@@ -34,8 +35,15 @@ typedef enum {
 	DONE = 1
 } Status;
 
+typedef enum {
+	Todo,
+	Done,
+	Integrations,
+	TAB_END
+} Tab;
+
 // Set default tab to TODO tab
-Status tabSel = TODO;
+Tab tabSel = TODO;
 
 const char *priority_str[] = {
 	"INVALID",
@@ -78,14 +86,6 @@ char getch() {
 }
 
 int display_tasks() {
-	if (tabSel == TODO) {
-		printf(GRY"| TODO  |"RST" DONE |\n");
-		printf(GRY"'-------'"RST"------'\n");
-	}
-	else {
-		printf("| TODO  "GRY"| DONE |\n"RST);
-		printf("'-------"GRY"'------'\n"RST);	
-	}
 	printf("Tasks\n");
 	printf("========\n");
 	// Headers
@@ -97,10 +97,10 @@ int display_tasks() {
 	}
 	struct Task task;
 	while (fscanf(tasksFile, "%d,\"%[^\"]\",%d,%d\n", &task.num, task.name, (int*)&task.priority, (int*)&task.status) == 4) {
-		if (tabSel == TODO && task.status != TODO) {
+		if (tabSel == Todo && task.status != Todo) {
 			continue;
 		}
-		if (tabSel == DONE && task.status != DONE) {
+		if (tabSel == Done && task.status != Done) {
 			continue;
 		}
 		switch (task.priority) {
@@ -136,6 +136,30 @@ int display_tasks() {
 	return 0;
 }
 
+int display_integrations() {
+	printf("Asana\n");
+	printf("========\n");
+	printf("1. setup asana integration\n");
+	return 0;
+}
+
+void display_hud() {
+	if (tabSel == Todo) {
+		printf(GRY"| TODO  |"RST" DONE | INTEGRATIONS |\n");
+		printf(GRY"'-------'"RST"------'--------------'\n");
+		display_tasks();
+	}
+	else if (tabSel == Done) {
+		printf("| TODO  "GRY"| DONE |"RST" INTEGRATIONS |\n");
+		printf("'-------"GRY"'------'"RST"--------------'\n");
+		display_tasks();
+	}
+	else {
+		printf("| TODO  | DONE "GRY"| INTEGRATIONS |\n"RST);
+		printf("'-------'------"GRY"'--------------'\n"RST);
+		display_integrations();
+	}
+}
 
 int add_task() {
 	struct Task task;
@@ -192,7 +216,7 @@ int add_task() {
 
 int complete_task() {
 	clear_screen();
-	display_tasks();
+	display_hud();
 
 	printf("\033[999;1HNumber of completed task: ");
 	// Convert char to int
@@ -223,7 +247,7 @@ int complete_task() {
 
 int delete_task() {
 	clear_screen();
-	display_tasks();
+	display_hud();
 
 	printf("\033[999;1HNumber of completed task: ");
 	// Convert char to int
@@ -257,14 +281,14 @@ int delete_task() {
 
 int edit_task() {
 	clear_screen();
-	display_tasks();
+	display_hud();
 
 	printf("\033[999;1HNumber of task to edit: ");
 	// Convert char to int
 	int selectedNum = getch() - '0';
 
 	clear_screen();
-	display_tasks();
+	display_hud();
 
 	printf("\033[999;1HNew task name: ");
 	char newTaskName[100];
@@ -272,7 +296,7 @@ int edit_task() {
 	newTaskName[strcspn(newTaskName, "\n")] = 0;
 
 	clear_screen();
-	display_tasks();
+	display_hud();
 	printf("\033[999;1HSelect priority: [1] HIGH | [2] MEDIUM | [3] LOW");
 	int newPriorityInput = getch();
 
@@ -312,13 +336,11 @@ int edit_task() {
   rename(TEMP_FILENAME, TASKS_FILENAME);
 	
 	return 0;
-	
-	return 0;
 }
 
 int draw_home() {
 	clear_screen();
-	display_tasks();
+	display_hud();
 
 	// Print at bottom of screen
 	printf("\033[999;1H[a] add task | [c] complete task | [d] delete task | [e] edit task | [t] toggle tab | [q] quit");
@@ -336,12 +358,11 @@ int draw_home() {
 		edit_task();
 	}
 	else if (input == 't') {
-		if (tabSel == TODO) {
-			tabSel = DONE;
+		if (tabSel == TAB_END-1) {
+			// If on the last tab, wrap around to the first tab
+			tabSel = 0;
 		}
-		else {
-			tabSel = TODO;
-		}
+		else tabSel++;
 	}
 	else if (input == 'q') {
 		printf("\n");
